@@ -445,6 +445,7 @@ int main()
 
 	// Shader principal
 	Shader lightingShader("Shader/lighting.vs", "Shader/lighting.frag");
+	Shader lampShader("Shader/lamp.vs", "Shader/lamp.frag");
 	Shader skyboxShader("Shader/SkyBox.vs", "Shader/SkyBox.frag");
 
 	// Modelos principales
