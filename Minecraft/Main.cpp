@@ -321,7 +321,7 @@ int main()
 
 	//models
 	Model Aldea((char*)"Models/Aldea/aldea.obj");
-	Model Steve((char*)"Models/Steve/steve.obj");
+	Model Steve((char*)"Models/Steve/steve.fbx");
 
 
 	//KeyFrames
@@ -558,12 +558,12 @@ int main()
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
 
 		//Steve
-		//model = modelTemp;
-		//model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.208f));
-		//model = glm::scale(model, glm::vec3(0.05f));
-		////model = glm::rotate(model, glm::radians(head), glm::vec3(1.0f, 0.0f, 0.0f));
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//Steve.Draw(lightingShader);
+		model = modelTemp;
+		model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.208f));
+		model = glm::scale(model, glm::vec3(0.05f));
+		//model = glm::rotate(model, glm::radians(head), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Steve.Draw(lightingShader);
 
 		////Tail 
 		//model = modelTemp;
