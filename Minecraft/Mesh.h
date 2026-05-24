@@ -19,6 +19,8 @@
 
 using namespace std;
 
+#define MAX_BONE_INFLUENCE 4
+
 struct Vertex
 {
 	// Position
@@ -27,6 +29,10 @@ struct Vertex
 	glm::vec3 Normal;
 	// TexCoords
 	glm::vec2 TexCoords;
+
+	// Skeletal animation
+	int   m_BoneIDs[MAX_BONE_INFLUENCE];   // indices de hueso (layout 3)
+	float m_Weights[MAX_BONE_INFLUENCE];   // pesos           (layout 4)
 };
 
 struct Texture
@@ -137,6 +143,14 @@ private:
 		// Vertex Texture Coords
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)offsetof(Vertex, TexCoords));
+
+		// layout 3 - BoneIDs  (enteros -> glVertexAttribIPointer)
+		glEnableVertexAttribArray(3);
+		glVertexAttribIPointer(3, 4, GL_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_BoneIDs));
+
+		// layout 4 - Weights
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, m_Weights));
 
 		glBindVertexArray(0);
 	}

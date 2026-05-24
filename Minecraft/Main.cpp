@@ -1,3 +1,7 @@
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -25,13 +29,18 @@
 #include "Camera.h"
 #include "Model.h"
 #include "Texture.h"
+#include "Animation.h"
+#include "Animation.h"
+#include "Animator.h"
 
+Animation* g_SteveAnim = nullptr;
+Animator* g_SteveAnimator = nullptr;
 
 // Function prototypes
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void MouseCallback(GLFWwindow* window, double xPos, double yPos);
 void DoMovement();
-void Animation();
+void AnimationKeys();
 
 // Window dimensions
 const GLuint WIDTH = 800, HEIGHT = 600;
@@ -111,7 +120,8 @@ float head = 0.0f;
 float tail = 0.0f;
 float FRLeg = 0.0f;
 
-
+//Animacion fbx
+bool playFBX = false;
 
 //KeyFrames
 float dogPosX, dogPosY, dogPosZ;
@@ -321,7 +331,10 @@ int main()
 
 	//models
 	Model Aldea((char*)"Models/Aldea/aldea.obj");
-	Model Steve((char*)"Models/Steve/steve.fbx");
+	Model Steve((char*)"Models/Steve/steveAnimated.fbx");
+	g_SteveAnim = new Animation("Models/Steve/steveAnimated.fbx", &Steve);
+	g_SteveAnimator = new Animator(g_SteveAnim);
+
 
 
 	//KeyFrames
@@ -466,7 +479,11 @@ int main()
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
 		DoMovement();
-		Animation();
+		AnimationKeys();
+
+		if (playFBX)
+			g_SteveAnimator->UpdateAnimation(deltaTime);
+
 
 		// Clear the colorbuffer
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -477,7 +494,6 @@ int main()
 
 
 		glm::mat4 modelTemp = glm::mat4(1.0f); //Temp
-
 
 
 		// Use cooresponding shader when setting uniforms/drawing objects
@@ -545,7 +561,7 @@ int main()
 
 		glm::mat4 model(1);
 
-
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
 		//Carga de modelos 
 		view = camera.GetViewMatrix();
@@ -557,13 +573,35 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
 
-		//Steve
+		//Steve (Herobrine)
 		model = modelTemp;
-		model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.208f));
-		model = glm::scale(model, glm::vec3(0.05f));
-		//model = glm::rotate(model, glm::radians(head), glm::vec3(1.0f, 0.0f, 0.0f));
+		if (playFBX)
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+			model = glm::translate(model, glm::vec3(2.0f + dogPosX, 0.1f + dogPosY, 0.0f + dogPosZ));
+			//model = glm::rotate(model, glm::radians(-180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.05f));
+			const auto& transforms = g_SteveAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)transforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(transforms[i])
+				);
+			}
+		}
+		else
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+			model = glm::translate(model, glm::vec3(2.0f + dogPosX, 0.1f + dogPosY, 0.0f + dogPosZ));
+			model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.05f));
+		}
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		Steve.Draw(lightingShader);
+
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
 		////Tail 
 		//model = modelTemp;
@@ -657,7 +695,8 @@ int main()
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &skyboxVAO);
 	glDeleteBuffers(1, &skyboxVAO);
-
+	delete g_SteveAnim;
+	delete g_SteveAnimator;
 
 	// Terminate GLFW, clearing any resources allocated by GLFW.
 	glfwTerminate();
@@ -870,9 +909,23 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		}
 	}
 
+	if (key == GLFW_KEY_B && action == GLFW_PRESS)
+	{
+		playFBX = !playFBX;
+		if (playFBX) {
+			g_SteveAnimator->PlayAnimation(g_SteveAnim);
+			printf("Animacion FBX Activada\n");
+		}
+		else {
+			g_SteveAnimator->Reset();
+			printf("Animacion FBX Pausada\n");
+		}
+
+	}
+
 
 }
-void Animation() {
+void AnimationKeys() {
 
 	if (play)
 	{
