@@ -16,8 +16,6 @@
 #include "stb_image.h"
 
 // GLM Mathematics
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 //Load Models
@@ -118,11 +116,14 @@ float FRLeg = 0.0f;
 
 //Animacion fbx
 bool playFBX = false;
+bool playAlex = false;
 Animation* g_SteveAnim = nullptr;
 Animator* g_SteveAnimator = nullptr;
 float steveSpeed = 1.0f;
 int steveEstado = 0;
 float steveDir = 1.0f;
+Animation* g_alexAnim = nullptr;
+Animator* g_alexAnimator = nullptr;
 
 //KeyFrames
 float dogPosX, dogPosY, dogPosZ;
@@ -335,7 +336,10 @@ int main()
 	Model Steve((char*)"Models/Steve/steveAnimated.fbx");
 	g_SteveAnim = new Animation("Models/Steve/steveAnimated.fbx", &Steve);
 	g_SteveAnimator = new Animator(g_SteveAnim);
-
+	Model Alex((char*)"Models/Alex/alexAnimated.fbx");
+	g_alexAnim = new Animation("Models/Alex/alexAnimated.fbx", &Alex);
+	g_alexAnimator = new Animator(g_alexAnim);
+	g_alexAnimator->Reset();
 
 
 	//KeyFrames
@@ -626,6 +630,50 @@ int main()
 		Steve.Draw(lightingShader);
 
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+
+		//Alex
+		model = modelTemp;
+		if (playAlex)
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+			g_alexAnimator->UpdateAnimation(deltaTime);
+
+			model = glm::translate(model, glm::vec3(1.0f, -0.05f, 1.0f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.2f));
+
+			const auto& alexTransforms = g_alexAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)alexTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(alexTransforms[i])
+				);
+			}
+		}
+		else
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+
+			const auto& alexTransforms = g_alexAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)alexTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(alexTransforms[i])
+				);
+			}
+
+			model = glm::translate(model, glm::vec3(1.0f, -0.05f, 1.0f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.2f));
+		}
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Alex.Draw(lightingShader);
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+
 
 		////Tail 
 		//model = modelTemp;
@@ -944,6 +992,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 		printf("Animación de Steve reiniciada desde el origen\n");
 
+	}
+
+	if (key == GLFW_KEY_V && action == GLFW_PRESS)
+	{
+		playAlex = !playAlex;
+		if (playAlex) {
+			g_alexAnimator->PlayAnimation(g_alexAnim);
+			printf("Animacion Alex Activada\n");
+		}
+		else {
+			g_alexAnimator->Reset();
+			printf("Animacion Alex Pausada\n");
+		}
 	}
 
 
