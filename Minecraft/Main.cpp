@@ -30,11 +30,7 @@
 #include "Model.h"
 #include "Texture.h"
 #include "Animation.h"
-#include "Animation.h"
 #include "Animator.h"
-
-Animation* g_SteveAnim = nullptr;
-Animator* g_SteveAnimator = nullptr;
 
 // Function prototypes
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -122,6 +118,11 @@ float FRLeg = 0.0f;
 
 //Animacion fbx
 bool playFBX = false;
+Animation* g_SteveAnim = nullptr;
+Animator* g_SteveAnimator = nullptr;
+float steveSpeed = 1.0f;
+int steveEstado = 0;
+float steveDir = 1.0f;
 
 //KeyFrames
 float dogPosX, dogPosY, dogPosZ;
@@ -481,10 +482,6 @@ int main()
 		DoMovement();
 		AnimationKeys();
 
-		if (playFBX)
-			g_SteveAnimator->UpdateAnimation(deltaTime);
-
-
 		// Clear the colorbuffer
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -577,9 +574,36 @@ int main()
 		model = modelTemp;
 		if (playFBX)
 		{
+			// Maquina estados
+			if (steveEstado == 0) // Estado 0: Caminando hacia adelante
+			{
+				g_SteveAnimator->UpdateAnimation(deltaTime);
+				dogPosZ += steveDir * steveSpeed * deltaTime;
+
+				if (dogPosZ >= 2.8f)
+				{
+					dogPosZ = 2.8f;   
+					steveDir = -1.0f;
+					steveEstado = 1;    
+				}
+			}
+			else if (steveEstado == 1) // Estado 1: Regresando al origen
+			{
+				g_SteveAnimator->UpdateAnimation(deltaTime);
+				dogPosZ += steveDir * steveSpeed * deltaTime;
+
+				if (dogPosZ <= 0.0f)
+				{
+					dogPosZ = 0.0f;    
+					steveEstado = 2;     
+					playFBX = false;
+				}
+			}
+
 			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
 			model = glm::translate(model, glm::vec3(2.0f + dogPosX, 0.1f + dogPosY, 0.0f + dogPosZ));
-			//model = glm::rotate(model, glm::radians(-180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			if (steveEstado == 1)
+				model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			model = glm::scale(model, glm::vec3(0.05f));
 			const auto& transforms = g_SteveAnimator->GetFinalBoneMatrices();
 			for (int i = 0; i < (int)transforms.size(); i++)
@@ -911,15 +935,14 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 	{
-		playFBX = !playFBX;
-		if (playFBX) {
-			g_SteveAnimator->PlayAnimation(g_SteveAnim);
-			printf("Animacion FBX Activada\n");
-		}
-		else {
-			g_SteveAnimator->Reset();
-			printf("Animacion FBX Pausada\n");
-		}
+		dogPosZ = 0.0f;
+		steveEstado = 0;
+		steveDir = 1.0f;
+
+		g_SteveAnimator->PlayAnimation(g_SteveAnim);
+		playFBX = true;
+
+		printf("Animación de Steve reiniciada desde el origen\n");
 
 	}
 
