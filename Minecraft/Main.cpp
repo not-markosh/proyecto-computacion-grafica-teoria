@@ -117,6 +117,7 @@ float FRLeg = 0.0f;
 //Animacion fbx
 bool playFBX = false;
 bool playAlex = false;
+bool playZombie = false;
 Animation* g_SteveAnim = nullptr;
 Animator* g_SteveAnimator = nullptr;
 float steveSpeed = 1.0f;
@@ -124,6 +125,8 @@ int steveEstado = 0;
 float steveDir = 1.0f;
 Animation* g_alexAnim = nullptr;
 Animator* g_alexAnimator = nullptr;
+Animation* g_zombieAnim = nullptr;
+Animator* g_zombieAnimator = nullptr;
 
 //KeyFrames
 float dogPosX, dogPosY, dogPosZ;
@@ -333,13 +336,21 @@ int main()
 
 	//models
 	Model Aldea((char*)"Models/Aldea/aldea.obj");
+
 	Model Steve((char*)"Models/Steve/steveAnimated.fbx");
 	g_SteveAnim = new Animation("Models/Steve/steveAnimated.fbx", &Steve);
 	g_SteveAnimator = new Animator(g_SteveAnim);
+	g_SteveAnimator->Reset();
+
 	Model Alex((char*)"Models/Alex/alexAnimated.fbx");
 	g_alexAnim = new Animation("Models/Alex/alexAnimated.fbx", &Alex);
 	g_alexAnimator = new Animator(g_alexAnim);
 	g_alexAnimator->Reset();
+
+	Model Zombie((char*)"Models/Zombie/zombieAnimated.fbx");
+	g_zombieAnim = new Animation("Models/Zombie/zombieAnimated.fbx", &Zombie);
+	g_zombieAnimator = new Animator(g_zombieAnim);
+	g_zombieAnimator->Reset();
 
 
 	//KeyFrames
@@ -674,6 +685,49 @@ int main()
 		Alex.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
+		//Zombie
+		model = modelTemp;
+		if (playZombie)
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+			g_zombieAnimator->UpdateAnimation(deltaTime);
+
+			model = glm::translate(model, glm::vec3(-0.5f, 0.7f, 0.5f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.05f));
+
+			const auto& zombieTransforms = g_zombieAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)zombieTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(zombieTransforms[i])
+				);
+			}
+		}
+		else
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+
+			const auto& zombieTransforms = g_zombieAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)zombieTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(zombieTransforms[i])
+				);
+			}
+
+			model = glm::translate(model, glm::vec3(-0.5f, 0.7f, 0.5f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.05f));
+		}
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Zombie.Draw(lightingShader);
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+
 
 		////Tail 
 		//model = modelTemp;
@@ -1004,6 +1058,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		else {
 			g_alexAnimator->Reset();
 			printf("Animacion Alex Pausada\n");
+		}
+	}
+
+	if (key == GLFW_KEY_C && action == GLFW_PRESS)
+	{
+		playZombie = !playZombie;
+		if (playZombie) {
+			g_zombieAnimator->PlayAnimation(g_zombieAnim);
+			printf("Animacion Zombie Activada\n");
+		}
+		else {
+			g_zombieAnimator->Reset();
+			printf("Animacion Zombie Pausada\n");
 		}
 	}
 
