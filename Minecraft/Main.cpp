@@ -121,6 +121,16 @@ float head = 0.0f;
 float tail = 0.0f;
 float FRLeg = 0.0f;
 
+//Animacion maquina de estados zorro
+int zorroEstado = 0;
+float zorroSit = 0.0f;    // 0 = parado, 1 = sentado
+float zorroSitSpeed = 1.5f;
+// Pose sentado
+float sitBody = -18.5f;
+float sitHead = 7.5f;
+float sitRear = 13.5f;
+float sitTail = -12.0f;
+
 //Animacion fbx
 bool playFBX = false;
 bool playAlex = false;
@@ -553,6 +563,18 @@ int main()
 		DoMovement();
 		AnimationKeys();
 
+		// Zorro state machine
+		if (zorroEstado == 1)        // sentandose
+		{
+			zorroSit += zorroSitSpeed * deltaTime;
+			if (zorroSit >= 1.0f) { zorroSit = 1.0f; zorroEstado = 2; }
+		}
+		else if (zorroEstado == 3)   // levantandose
+		{
+			zorroSit -= zorroSitSpeed * deltaTime;
+			if (zorroSit <= 0.0f) { zorroSit = 0.0f; zorroEstado = 0; }
+		}
+
 		// Clear the colorbuffer
 		/*glClearColor(0.1f, 0.1f, 0.1f, 1.0f);*/
 		glm::vec3 daySky = glm::vec3(0.5f, 0.7f, 1.0f);
@@ -870,10 +892,18 @@ int main()
 		/* Inicia Dibujo Modelo Zorro */
 		////////////////////////////////
 
+		float t = zorroSit;
+		float bodyAng = sitBody * t;
+		float headAng = sitHead * t;
+		float rearAng = sitRear * t;
+		float tailAng = sitTail * t;
+
 		// Cabeza
 		model = modelTemp;
 		model = glm::scale(model, glm::vec3(0.05f));
 		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		model = glm::rotate(model, glm::radians(bodyAng), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(headAng), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroCabeza.Draw(lightingShader);
 
@@ -881,13 +911,15 @@ int main()
 		model = modelTemp;
 		model = glm::scale(model, glm::vec3(0.05f));
 		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		model = glm::rotate(model, glm::radians(bodyAng), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroCuerpo.Draw(lightingShader);
 
-		// Cola
+		// Cola 
 		model = modelTemp;
 		model = glm::scale(model, glm::vec3(0.05f));
 		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		model = glm::rotate(model, glm::radians(tailAng), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroCola.Draw(lightingShader);
 
@@ -898,24 +930,28 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroPataDD.Draw(lightingShader);
 
-		// Pata Delantera Izquiera
+		// Pata Delantera Izquierda
 		model = modelTemp;
 		model = glm::scale(model, glm::vec3(0.05f));
 		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroPataDI.Draw(lightingShader);
 
-		// Pata Trasera Derecha
+		// Pata Trasera Derecha 
 		model = modelTemp;
 		model = glm::scale(model, glm::vec3(0.05f));
 		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		model = glm::rotate(model, glm::radians(bodyAng), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(rearAng), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroPataTD.Draw(lightingShader);
-		
-		// Pata Trasera Izquierda
+
+		// Pata Trasera Izquierda 
 		model = modelTemp;
 		model = glm::scale(model, glm::vec3(0.05f));
 		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		model = glm::rotate(model, glm::radians(bodyAng), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(rearAng), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroPataTI.Draw(lightingShader);
 
@@ -1058,68 +1094,6 @@ int main()
 // Moves/alters the camera positions based on user input
 void DoMovement()
 {
-	//Dog Controls
-
-	if (keys[GLFW_KEY_2])
-	{
-		rotDog += 1.0f;
-	}
-
-	if (keys[GLFW_KEY_3])
-	{
-		rotDog -= 1.0f;
-	}
-
-	if (keys[GLFW_KEY_4])
-	{
-		head += 1.0f;
-	}
-
-	if (keys[GLFW_KEY_5])
-	{
-		head -= 1.0f;
-	}
-
-	if (keys[GLFW_KEY_6])
-	{
-		FRLeg += 1.0f;
-	}
-
-	if (keys[GLFW_KEY_7])
-	{
-		FRLeg -= 1.0f;
-	}
-
-	if (keys[GLFW_KEY_8])
-	{
-		RLegs += 1.0f;
-	}
-
-	if (keys[GLFW_KEY_9])
-	{
-		RLegs -= 1.0f;
-	}
-
-	if (keys[GLFW_KEY_H])
-	{
-		dogPosZ += 0.01;
-	}
-
-	if (keys[GLFW_KEY_Y])
-	{
-		dogPosZ -= 0.01;
-	}
-
-	if (keys[GLFW_KEY_G])
-	{
-		dogPosX -= 0.01;
-	}
-
-	if (keys[GLFW_KEY_J])
-	{
-		dogPosX += 0.01;
-	}
-
 
 	// Camera controls
 	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
@@ -1319,6 +1293,13 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 			g_ghastAnimator->Reset();
 			printf("Animacion Ghast Pausada\n");
 		}
+	}
+	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+	{
+		if (zorroEstado == 0 || zorroEstado == 3)
+			zorroEstado = 1;   // sentarse
+		else
+			zorroEstado = 3;   // levantarse
 	}
 
 	if (key == GLFW_KEY_N && action == GLFW_PRESS)
