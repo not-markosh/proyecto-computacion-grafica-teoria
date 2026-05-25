@@ -118,6 +118,7 @@ float FRLeg = 0.0f;
 bool playFBX = false;
 bool playAlex = false;
 bool playZombie = false;
+bool playGhast = false;
 Animation* g_SteveAnim = nullptr;
 Animator* g_SteveAnimator = nullptr;
 float steveSpeed = 1.0f;
@@ -127,6 +128,9 @@ Animation* g_alexAnim = nullptr;
 Animator* g_alexAnimator = nullptr;
 Animation* g_zombieAnim = nullptr;
 Animator* g_zombieAnimator = nullptr;
+Animation* g_ghastAnim = nullptr;
+Animator* g_ghastAnimator = nullptr;
+
 
 //KeyFrames
 float dogPosX, dogPosY, dogPosZ;
@@ -369,6 +373,11 @@ int main()
 	g_zombieAnim = new Animation("Models/Zombie/zombieAnimated.fbx", &Zombie);
 	g_zombieAnimator = new Animator(g_zombieAnim);
 	g_zombieAnimator->Reset();
+
+	Model Ghast((char*)"Models/Ghast/ghast.fbx");
+	g_ghastAnim = new Animation("Models/Ghast/ghast.fbx", &Ghast);
+	g_ghastAnimator = new Animator(g_ghastAnim);
+	g_ghastAnimator->Reset();
 
 
 	//KeyFrames
@@ -744,6 +753,51 @@ int main()
 		}
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		Zombie.Draw(lightingShader);
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+
+		//Ghast
+		model = modelTemp;
+		if (playGhast)
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+			g_ghastAnimator->UpdateAnimation(deltaTime);
+
+			model = glm::translate(model, glm::vec3(0.7f, 1.5f, 0.2f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.2f));
+
+			const auto& ghastTransforms = g_ghastAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)ghastTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(ghastTransforms[i])
+				);
+			}
+		}
+		else
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+
+			const auto& ghastTransforms = g_ghastAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)ghastTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(ghastTransforms[i])
+				);
+			}
+
+			model = glm::translate(model, glm::vec3(0.7f, 1.5f, 0.2f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.2f));
+		}
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Ghast.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
 
@@ -1168,6 +1222,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		else {
 			g_zombieAnimator->Reset();
 			printf("Animacion Zombie Pausada\n");
+		}
+	}
+
+	if (key == GLFW_KEY_X && action == GLFW_PRESS)
+	{
+		playGhast = !playGhast;
+		if (playGhast) {
+			g_ghastAnimator->PlayAnimation(g_ghastAnim);
+			printf("Animacion Ghast Activada\n");
+		}
+		else {
+			g_ghastAnimator->Reset();
+			printf("Animacion Ghast Pausada\n");
 		}
 	}
 
