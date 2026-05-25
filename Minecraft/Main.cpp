@@ -103,6 +103,13 @@ float vertices[] = {
 };
 
 
+float sunAngle = 0.0f;
+float sunSpeed = 0.2f;
+float sunRadius = 10.0f;
+bool dayNightCycle = true;
+glm::vec3 sunPosition(0.0f);
+
+
 glm::vec3 Light1 = glm::vec3(0);
 //Anim
 float rotBall = 0.0f;
@@ -519,13 +526,40 @@ int main()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+
+		// ===== SUN / DAY-NIGHT CYCLE =====
+		if (dayNightCycle)
+		{
+			sunAngle += sunSpeed * deltaTime;
+			if (sunAngle > glm::two_pi<float>())
+				sunAngle -= glm::two_pi<float>();
+		}
+
+		// Sun orbits in a vertical circle around the scene center.
+		// sin(angle) controls height: +1 = noon (top), -1 = midnight (below ground)
+		sunPosition.x = sunRadius * cos(sunAngle);
+		sunPosition.y = sunRadius * sin(sunAngle);
+		sunPosition.z = 0.0f;
+
+		// "Day factor": 1.0 when sun is high, 0.0 when below the horizon
+		float dayFactor = glm::clamp(sin(sunAngle), 0.0f, 1.0f);
+
+		// Direction FROM the sun TOWARD the scene (for directional light)
+		glm::vec3 sunDir = glm::normalize(-sunPosition);
+
+
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
 		DoMovement();
 		AnimationKeys();
 
 		// Clear the colorbuffer
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		/*glClearColor(0.1f, 0.1f, 0.1f, 1.0f);*/
+		glm::vec3 daySky = glm::vec3(0.5f, 0.7f, 1.0f);
+		glm::vec3 nightSky = glm::vec3(0.02f, 0.02f, 0.08f);
+		glm::vec3 skyColor = glm::mix(nightSky, daySky, dayFactor);
+		glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
+
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// OpenGL options
@@ -546,10 +580,34 @@ int main()
 
 
 		// Directional light
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
+		/*glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 0.6f, 0.6f, 0.6f);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"), 0.6f, 0.6f, 0.6f);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);*/
+
+
+		// ===== DIRECTIONAL LIGHT (THE SUN) =====
+		// Sunlight color shifts: warm orange near horizon, white at noon
+		glm::vec3 noonColor = glm::vec3(1.0f, 0.97f, 0.9f);   // bright daylight
+		glm::vec3 sunsetColor = glm::vec3(1.0f, 0.5f, 0.2f);    // warm orange/red
+
+		// Blend between sunset and noon colors based on how high the sun is
+		float horizonBlend = glm::clamp(sin(sunAngle) * 2.0f, 0.0f, 1.0f);
+		glm::vec3 sunColor = glm::mix(sunsetColor, noonColor, horizonBlend);
+
+		// Night ambient/diffuse values (cool, dim moonlight)
+		glm::vec3 nightAmbient = glm::vec3(0.05f, 0.05f, 0.12f);
+		glm::vec3 nightDiffuse = glm::vec3(0.08f, 0.08f, 0.2f);
+
+		// Interpolate between night and day depending on dayFactor
+		glm::vec3 ambient = glm::mix(nightAmbient, sunColor * 0.4f, dayFactor);
+		glm::vec3 diffuse = glm::mix(nightDiffuse, sunColor * 0.8f, dayFactor);
+		glm::vec3 specular = glm::mix(glm::vec3(0.1f), sunColor * 0.5f, dayFactor);
+
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), sunDir.x, sunDir.y, sunDir.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), ambient.x, ambient.y, ambient.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"), diffuse.x, diffuse.y, diffuse.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), specular.x, specular.y, specular.z);
 
 
 		// Point light 1
@@ -559,13 +617,20 @@ int main()
 		lightColor.z = sin(glfwGetTime() * Light1.z);
 
 
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].position"), pointLightPositions[0].x, pointLightPositions[0].y, pointLightPositions[0].z);
+		/*glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].position"), pointLightPositions[0].x, pointLightPositions[0].y, pointLightPositions[0].z);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].ambient"), lightColor.x, lightColor.y, lightColor.z);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].diffuse"), lightColor.x, lightColor.y, lightColor.z);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].specular"), 1.0f, 0.2f, 0.2f);
 		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].constant"), 1.0f);
 		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].linear"), 0.045f);
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].quadratic"), 0.075f);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].quadratic"), 0.075f);*/
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].position"), sunPosition.x, sunPosition.y, sunPosition.z);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].ambient"), sunColor.x * dayFactor, sunColor.y * dayFactor, sunColor.z * dayFactor);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].diffuse"), sunColor.x * dayFactor, sunColor.y * dayFactor, sunColor.z * dayFactor);
+		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].specular"), 1.0f, 0.9f, 0.7f);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].constant"), 1.0f);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].linear"), 0.014f);
+		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].quadratic"), 0.0007f);
 
 
 		// SpotLight
@@ -940,9 +1005,16 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		// Draw the light object (using light's vertex attributes)
 
+		//model = glm::mat4(1);
+		//model = glm::translate(model, pointLightPositions[0]);
+		//model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		//glBindVertexArray(VAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
+
 		model = glm::mat4(1);
-		model = glm::translate(model, pointLightPositions[0]);
-		model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+		model = glm::translate(model, sunPosition);
+		model = glm::scale(model, glm::vec3(0.6f)); // Bigger so the sun is visible
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -1048,6 +1120,7 @@ void DoMovement()
 		dogPosX += 0.01;
 	}
 
+
 	// Camera controls
 	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
 	{
@@ -1076,6 +1149,15 @@ void DoMovement()
 
 	}
 
+	if (keys[GLFW_KEY_COMMA])   // ',' move sun backward
+	{
+		sunAngle -= 0.01f;
+	}
+	if (keys[GLFW_KEY_PERIOD])  // '.' move sun forward
+	{
+		sunAngle += 0.01f;
+	}
+
 	if (keys[GLFW_KEY_T])
 	{
 		pointLightPositions[0].x += 0.01f;
@@ -1102,6 +1184,7 @@ void DoMovement()
 	{
 		pointLightPositions[0].z += 0.01f;
 	}
+
 	if (keys[GLFW_KEY_O])  // 'O' for Output (save to file)
 	{
 		if (FrameIndex > 0)
@@ -1236,6 +1319,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 			g_ghastAnimator->Reset();
 			printf("Animacion Ghast Pausada\n");
 		}
+	}
+
+	if (key == GLFW_KEY_N && action == GLFW_PRESS)
+	{
+		dayNightCycle = !dayNightCycle;
+		printf("Day/Night cycle: %s\n", dayNightCycle ? "ON" : "OFF");
 	}
 
 
