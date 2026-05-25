@@ -337,6 +337,24 @@ int main()
 	//models
 	Model Aldea((char*)"Models/Aldea/aldea.obj");
 
+	//Model Zorro
+	Model ZorroCabeza((char*)"Models/Zorro/cabeza.obj");
+	Model ZorroCola((char*)"Models/Zorro/cola.obj");
+	Model ZorroCuerpo((char*)"Models/Zorro/cuerpo.obj");
+	Model ZorroPataDD((char*)"Models/Zorro/pataDerDelante.obj");
+	Model ZorroPataTD((char*)"Models/Zorro/pataDerDetras.obj");
+	Model ZorroPataDI((char*)"Models/Zorro/pataIzqDelante.obj");
+	Model ZorroPataTI((char*)"Models/Zorro/pataIzqDetras.obj");
+
+	//Model Gato
+	Model GatoCara((char*)"Models/Gato/cara.obj");
+	Model GatoCola((char*)"Models/Gato/cola.obj");
+	Model GatoCuerpo((char*)"Models/Gato/cuerpo.obj");
+	Model GatoPataDD((char*)"Models/Gato/pataDerechaAdelante.obj");
+	Model GatoPataTD((char*)"Models/Gato/pataDerechaAtras.obj");
+	Model GatoPataDI((char*)"Models/Gato/pataIzquierdaAdelante.obj");
+	Model GatoPataTI((char*)"Models/Gato/pataIzquierdaAtras.obj");
+
 	Model Steve((char*)"Models/Steve/steveAnimated.fbx");
 	g_SteveAnim = new Animation("Models/Steve/steveAnimated.fbx", &Steve);
 	g_SteveAnimator = new Animator(g_SteveAnim);
@@ -729,36 +747,115 @@ int main()
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
 
-		////Tail 
-		//model = modelTemp;
-		//model = glm::translate(model, glm::vec3(0.0f, 0.026f, -0.288f));
-		//model = glm::rotate(model, glm::radians(tail), glm::vec3(0.0f, 0.0f, -1.0f));
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//DogTail.Draw(lightingShader);
-		////Front Left Leg
-		//model = modelTemp;
-		//model = glm::translate(model, glm::vec3(0.112f, -0.044f, 0.074f));
-		//model = glm::rotate(model, glm::radians(FLegs), glm::vec3(-1.0f, 0.0f, 0.0f));
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//F_LeftLeg.Draw(lightingShader);
-		////Front Right Leg
-		//model = modelTemp;
-		//model = glm::translate(model, glm::vec3(-0.111f, -0.055f, 0.074f));
-		//model = glm::rotate(model, glm::radians(FRLeg), glm::vec3(1.0f, 0.0f, 0.0f));
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//F_RightLeg.Draw(lightingShader);
-		////Back Left Leg
-		//model = modelTemp;
-		//model = glm::translate(model, glm::vec3(0.082f, -0.046, -0.218));
-		//model = glm::rotate(model, glm::radians(RLegs), glm::vec3(1.0f, 0.0f, 0.0f));
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//B_LeftLeg.Draw(lightingShader);
-		////Back Right Leg
-		//model = modelTemp;
-		//model = glm::translate(model, glm::vec3(-0.083f, -0.057f, -0.231f));
-		//model = glm::rotate(model, glm::radians(RLegs), glm::vec3(1.0f, 0.0f, 0.0f));
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//B_RightLeg.Draw(lightingShader);
+		////////////////////////////////
+		/* Inicia Dibujo Modelo Zorro */
+		////////////////////////////////
+
+		// Cabeza
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroCabeza.Draw(lightingShader);
+
+		// Cuerpo
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroCuerpo.Draw(lightingShader);
+
+		// Cola
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroCola.Draw(lightingShader);
+
+		// Pata Delantera Derecha
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroPataDD.Draw(lightingShader);
+
+		// Pata Delantera Izquiera
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroPataDI.Draw(lightingShader);
+
+		// Pata Trasera Derecha
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroPataTD.Draw(lightingShader);
+		
+		// Pata Trasera Izquierda
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		ZorroPataTI.Draw(lightingShader);
+
+		
+		/////////////////////////////////
+		/* Termina Dibujo Modelo Zorro */
+		/////////////////////////////////
+
+
+		///////////////////////////////
+		/* Inicia Dibujo Modelo Gato */
+		///////////////////////////////
+
+		// Cabeza
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoCuerpo.Draw(lightingShader);
+
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoCara.Draw(lightingShader);
+
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoCola.Draw(lightingShader);
+
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoPataDD.Draw(lightingShader);
+
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoPataDI.Draw(lightingShader);
+
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoPataTD.Draw(lightingShader);
+
+		model = modelTemp;
+		model = glm::scale(model, glm::vec3(0.05f));
+		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		GatoPataTI.Draw(lightingShader);
+
+		/////////////////////////////////
+		/* Termina Dibujo Modelo Gato */
+		////////////////////////////////
 
 
 		//model = glm::mat4(1);
