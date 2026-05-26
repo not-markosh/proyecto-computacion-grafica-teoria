@@ -1,7 +1,14 @@
+// Proyecto final - Escena inspirada en Minecraft
+// Autores: Cecilia Torres y Marco Antonio Sanchez
+
 #define GLM_ENABLE_EXPERIMENTAL
+
+//GLM Mathematics
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
+//C++ standard libraries
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -12,15 +19,11 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
-// Other Libs
+// Load images
 #include "stb_image.h"
-
-// GLM Mathematics
-#include <glm/gtc/type_ptr.hpp>
 
 //Load Models
 #include "SOIL2/SOIL2.h"
-
 
 // Other includes
 #include "Shader.h"
@@ -46,16 +49,17 @@ GLfloat lastX = WIDTH / 2.0;
 GLfloat lastY = HEIGHT / 2.0;
 bool keys[1024];
 bool firstMouse = true;
-// Light attributes
+
+//Luces
 glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 bool active;
 
 // Positions of the point lights
 glm::vec3 pointLightPositions[] = {
 	glm::vec3(0.0f,2.0f, 0.0f),
-	glm::vec3(0.0f,0.0f, 0.0f),
-	glm::vec3(0.0f,0.0f,  0.0f),
-	glm::vec3(0.0f,0.0f, 0.0f)
+	//glm::vec3(0.0f,0.0f, 0.0f),
+	//glm::vec3(0.0f,0.0f,  0.0f),
+	//glm::vec3(0.0f,0.0f, 0.0f)
 };
 
 float vertices[] = {
@@ -102,36 +106,27 @@ float vertices[] = {
 	   -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 
-//Ciclo noche y dia
+// === Animacion ciclo dia-noche ===
 float sunAngle = 0.0f;
 float sunSpeed = 0.2f;
 float sunRadius = 10.0f;
 bool dayNightCycle = true;
 glm::vec3 sunPosition(0.0f);
 
-
+// Intensidad luz puntual, se cambia con SPACE
 glm::vec3 Light1 = glm::vec3(0);
-//Anim
-float rotBall = 0.0f;
-float rotDog = 0.0f;
-int dogAnim = 0;
-float FLegs = 0.0f;
-float RLegs = 0.0f;
-float head = 0.0f;
-float tail = 0.0f;
-float FRLeg = 0.0f;
 
-//Animacion maquina de estados zorro
+// === Animacion maquina de estados zorro ===
 int zorroEstado = 0;
 float zorroSit = 0.0f;    // 0 = parado, 1 = sentado
 float zorroSitSpeed = 1.5f;
-// Pose sentado
+// Angulos para la pose sentado
 float sitBody = -18.5f;
 float sitHead = 7.5f;
 float sitRear = 13.5f;
 float sitTail = -12.0f;
 
-//Animacion fbx
+// === Animaciones FBX (por esqueleto) ===
 bool playFBX = false;
 bool playAlex = false;
 bool playZombie = false;
@@ -150,7 +145,7 @@ Animation* g_ghastAnim = nullptr;
 Animator* g_ghastAnimator = nullptr;
 
 
-//Animacion KeyFrames gato
+// === Animacion keyframes gato ===
 float gatoPosX = -0.15f, gatoPosY = 0.2f, gatoPosZ = -1.0f;
 float rotGato = 0.0f;
 float headGato = 0.0f;
@@ -186,10 +181,11 @@ typedef struct _frame {
 } FRAME;
 
 FRAME KeyFrame[MAX_FRAMES];
-int FrameIndex = 0;			// Introducir datos
+int FrameIndex = 0;	
 bool play = false;
 int playIndex = 0;
 
+// Funcion para guardar el estado actual del gato en un nuevo keyframe
 void saveFrame(void)
 {
 
@@ -210,6 +206,7 @@ void saveFrame(void)
 	FrameIndex++;
 }
 
+// Función para guardar los keyframes en un archivo de texto
 void saveFramesToFile(const char* filename)
 {
 	std::ofstream file(filename);
@@ -239,6 +236,7 @@ void saveFramesToFile(const char* filename)
 	printf("Saved %d frames to %s\n", FrameIndex, filename);
 }
 
+// Función para cargar los keyframes desde un archivo de texto
 void loadFramesFromFile(const char* filename)
 {
 	std::ifstream file(filename);
@@ -290,6 +288,7 @@ void loadFramesFromFile(const char* filename)
 	printf("Loaded %d frames from %s\n", frameCount, filename);
 }
 
+// Función para resetear el estado del gato al primer keyframe
 void resetElements(void)
 {
 	gatoPosX = KeyFrame[0].gatoPosX;
@@ -303,6 +302,8 @@ void resetElements(void)
 	inclinacionGato = KeyFrame[0].inclinacionGato;
 
 }
+
+// Función para calcular los incrementos entre el keyframe actual y el siguiente
 void interpolation(void)
 {
 
@@ -319,24 +320,14 @@ void interpolation(void)
 
 }
 
-
-
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
 
 int main()
 {
-	// Init GLFW
+	// Inicializacion de GLFW y creacion de ventana
 	glfwInit();
-	// Set all the required options for GLFW
-	/*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);*/
-
-	// Create a GLFWwindow object that we can use for GLFW's functions
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Proyecto final - Minecraft", nullptr, nullptr);
 
 	if (nullptr == window)
@@ -355,9 +346,6 @@ int main()
 	glfwSetKeyCallback(window, KeyCallback);
 	glfwSetCursorPosCallback(window, MouseCallback);
 
-	// GLFW Options
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
 	// Initialize GLEW to setup the OpenGL Function pointers
@@ -370,14 +358,15 @@ int main()
 	// Define the viewport dimensions
 	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-
-
+	// === Carga de shaders ===
 	Shader lightingShader("Shader/lighting.vs", "Shader/lighting.frag");
 	Shader lampShader("Shader/lamp.vs", "Shader/lamp.frag");
 	Shader skyboxShader("Shader/SkyBox.vs", "Shader/SkyBox.frag");
 
 
-	//models
+	// === Carga de modelos ===
+
+	//Model Aldea
 	Model Aldea((char*)"Models/Aldea/aldea.obj");
 
 	//Model Zorro
@@ -398,28 +387,32 @@ int main()
 	Model GatoPataDI((char*)"Models/Gato/pataIzquierdaAdelante.obj");
 	Model GatoPataTI((char*)"Models/Gato/pataIzquierdaAtras.obj");
 
+	//Model Steve
 	Model Steve((char*)"Models/Steve/steveAnimated.fbx");
 	g_SteveAnim = new Animation("Models/Steve/steveAnimated.fbx", &Steve);
 	g_SteveAnimator = new Animator(g_SteveAnim);
 	g_SteveAnimator->Reset();
 
+	//Model Alex
 	Model Alex((char*)"Models/Alex/alexAnimated.fbx");
 	g_alexAnim = new Animation("Models/Alex/alexAnimated.fbx", &Alex);
 	g_alexAnimator = new Animator(g_alexAnim);
 	g_alexAnimator->Reset();
 
+	//Model Zombie
 	Model Zombie((char*)"Models/Zombie/zombieAnimated.fbx");
 	g_zombieAnim = new Animation("Models/Zombie/zombieAnimated.fbx", &Zombie);
 	g_zombieAnimator = new Animator(g_zombieAnim);
 	g_zombieAnimator->Reset();
 
+	//Model Ghast
 	Model Ghast((char*)"Models/Ghast/ghast.fbx");
 	g_ghastAnim = new Animation("Models/Ghast/ghast.fbx", &Ghast);
 	g_ghastAnimator = new Animator(g_ghastAnim);
 	g_ghastAnimator->Reset();
 
 
-	//KeyFrames
+	//Inicializacion de keyframes
 	for (int i = 0; i < MAX_FRAMES; i++)
 	{
 		KeyFrame[i].gatoPosX = 0;
@@ -443,6 +436,7 @@ int main()
 
 	}
 
+	// Vertices skybox
 	GLfloat skyboxVertices[] = {
 		// Positions
 		-1.0f,  1.0f, -1.0f,
@@ -488,7 +482,6 @@ int main()
 		1.0f, -1.0f,  1.0f
 	};
 
-
 	GLuint indices[] =
 	{  // Note that we start from 0!
 		0,1,2,3,
@@ -501,7 +494,6 @@ int main()
 		28,29,30,31,
 		32,33,34,35
 	};
-
 
 	// First, set the container's VAO (and VBO)
 	GLuint VBO, VAO, EBO;
@@ -554,7 +546,7 @@ int main()
 
 	glm::mat4 projection = glm::perspective(camera.GetZoom(), (GLfloat)SCREEN_WIDTH / (GLfloat)SCREEN_HEIGHT, 0.1f, 100.0f);
 
-	// Game loop
+	// === Loop para renderizar la escena ===
 	while (!glfwWindowShouldClose(window))
 	{
 
@@ -564,7 +556,7 @@ int main()
 		lastFrame = currentFrame;
 
 
-		// ===== SUN / DAY-NIGHT CYCLE =====
+		// ==== Ciclo dia/noche ====
 		if (dayNightCycle)
 		{
 			sunAngle += sunSpeed * deltaTime;
@@ -573,7 +565,6 @@ int main()
 		}
 
 		// Sun orbits in a vertical circle around the scene center.
-		// sin(angle) controls height: +1 = noon (top), -1 = midnight (below ground)
 		sunPosition.x = sunRadius * cos(sunAngle);
 		sunPosition.y = sunRadius * sin(sunAngle);
 		sunPosition.z = 0.0f;
@@ -584,19 +575,18 @@ int main()
 		// Direction FROM the sun TOWARD the scene (for directional light)
 		glm::vec3 sunDir = glm::normalize(-sunPosition);
 
-
 		// Check if any events have been activiated (key pressed, mouse moved etc.) and call corresponding response functions
 		glfwPollEvents();
 		DoMovement();
 		AnimationKeys();
 
-		// Zorro state machine
-		if (zorroEstado == 1)        // sentandose
+		// Maquina de estados del zorro
+		if (zorroEstado == 1)        // sentado
 		{
 			zorroSit += zorroSitSpeed * deltaTime;
 			if (zorroSit >= 1.0f) { zorroSit = 1.0f; zorroEstado = 2; }
 		}
-		else if (zorroEstado == 3)   // levantandose
+		else if (zorroEstado == 3)   // parado
 		{
 			zorroSit -= zorroSitSpeed * deltaTime;
 			if (zorroSit <= 0.0f) { zorroSit = 0.0f; zorroEstado = 0; }
@@ -618,7 +608,7 @@ int main()
 		glm::mat4 modelTemp = glm::mat4(1.0f); //Temp
 
 
-		// Use cooresponding shader when setting uniforms/drawing objects
+		// Use corresponding shader when setting uniforms/drawing objects
 		lightingShader.Use();
 
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "diffuse"), 0);
@@ -627,15 +617,7 @@ int main()
 		GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
 		glUniform3f(viewPosLoc, camera.GetPosition().x, camera.GetPosition().y, camera.GetPosition().z);
 
-
-		// Directional light
-		/*glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.direction"), -0.2f, -1.0f, -0.3f);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.ambient"), 0.6f, 0.6f, 0.6f);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.diffuse"), 0.6f, 0.6f, 0.6f);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "dirLight.specular"), 0.3f, 0.3f, 0.3f);*/
-
-
-		// ===== DIRECTIONAL LIGHT (THE SUN) =====
+		// === Directional light (sun/moon) ===
 		// Sunlight color shifts: warm orange near horizon, white at noon
 		glm::vec3 noonColor = glm::vec3(1.0f, 0.97f, 0.9f);   // bright daylight
 		glm::vec3 sunsetColor = glm::vec3(1.0f, 0.5f, 0.2f);    // warm orange/red
@@ -665,14 +647,6 @@ int main()
 		lightColor.y = abs(sin(glfwGetTime() * Light1.y));
 		lightColor.z = sin(glfwGetTime() * Light1.z);
 
-
-		/*glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].position"), pointLightPositions[0].x, pointLightPositions[0].y, pointLightPositions[0].z);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].ambient"), lightColor.x, lightColor.y, lightColor.z);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].diffuse"), lightColor.x, lightColor.y, lightColor.z);
-		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].specular"), 1.0f, 0.2f, 0.2f);
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].constant"), 1.0f);
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].linear"), 0.045f);
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "pointLights[0].quadratic"), 0.075f);*/
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].position"), sunPosition.x, sunPosition.y, sunPosition.z);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].ambient"), sunColor.x * dayFactor, sunColor.y * dayFactor, sunColor.z * dayFactor);
 		glUniform3f(glGetUniformLocation(lightingShader.Program, "pointLights[0].diffuse"), sunColor.x * dayFactor, sunColor.y * dayFactor, sunColor.z * dayFactor);
@@ -726,7 +700,7 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "transparency"), 0);
 
-		//Steve (Herobrine)
+		// === Animacion de Steve caminando ===
 		model = modelTemp;
 		if (playFBX)
 		{
@@ -783,7 +757,7 @@ int main()
 
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
-		//Alex
+		// === Animacion de Alex idle ===
 		model = modelTemp;
 		if (playAlex)
 		{
@@ -826,7 +800,7 @@ int main()
 		Alex.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
-		//Zombie
+		// === Animacion de zombie con pushups ===
 		model = modelTemp;
 		if (playZombie)
 		{
@@ -869,7 +843,7 @@ int main()
 		Zombie.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
-		//Ghast
+		// === Animacion de ghast flotando ===
 		model = modelTemp;
 		if (playGhast)
 		{
@@ -914,11 +888,7 @@ int main()
 		Ghast.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
-
-		////////////////////////////////
-		/* Inicia Dibujo Modelo Zorro */
-		////////////////////////////////
-
+		// == Modelo del zorro ==
 		float t = zorroSit;
 		float bodyAng = sitBody * t;
 		float headAng = sitHead * t;
@@ -982,17 +952,8 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		ZorroPataTI.Draw(lightingShader);
 
-		
-		/////////////////////////////////
-		/* Termina Dibujo Modelo Zorro */
-		/////////////////////////////////
 
-
-		///////////////////////////////
-		/* Inicia Dibujo Modelo Gato */
-		///////////////////////////////
-
-		// Base del modelo gato
+		// === Modelo del gato ===
 		glm::mat4 modelGato = modelTemp;
 		modelGato = glm::translate(modelGato, glm::vec3(gatoPosX, gatoPosY, gatoPosZ));
 		modelGato = glm::rotate(modelGato, glm::radians(rotGato), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1006,57 +967,49 @@ int main()
 
 		// Cabeza
 		model = modelGato;
-		//model = glm::translate(model, glm::vec3(0.0f, 2.0f, 3.0f)); // 1. Mover al cuello (AJUSTAR)
 		model = glm::rotate(model, glm::radians(headGato), glm::vec3(1.0f, 0.0f, 0.0f)); // 2. Rotar
-		//model = glm::translate(model, glm::vec3(0.0f, -2.0f, -3.0f)); // 3. Regresar (Mismos números, pero negativos)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoCara.Draw(lightingShader);
 
 		// Cola
 		model = modelGato;
-		//model = glm::translate(model, glm::vec3(0.0f, 1.5f, -3.0f)); // 1. Mover a la base de la cola (AJUSTAR)
 		model = glm::rotate(model, glm::radians(tailGato), glm::vec3(0.0f, 1.0f, 0.0f));
-		//model = glm::translate(model, glm::vec3(0.0f, -1.5f, 3.0f)); // 3. Regresar
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoCola.Draw(lightingShader);
 
-		// Pata Delantera Derecha (DD)
+		// Pata Delantera Derecha
 		model = modelGato;
-		model = glm::translate(model, glm::vec3(-0.5f, 0.3f, 1.5f)); // 1. Mover al hombro DD (AJUSTAR)
+		model = glm::translate(model, glm::vec3(-0.5f, 0.3f, 1.5f));
 		model = glm::rotate(model, glm::radians(FLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(0.5f, -0.3f, -1.5f)); // 3. Regresar
+		model = glm::translate(model, glm::vec3(0.5f, -0.3f, -1.5f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataDD.Draw(lightingShader);
 
-		// Pata Delantera Izquierda (DI)
+		// Pata Delantera Izquierda
 		model = modelGato;
-		model = glm::translate(model, glm::vec3(0.5f, 0.3f, 1.5f)); // 1. Mover al hombro DI (AJUSTAR)
+		model = glm::translate(model, glm::vec3(0.5f, 0.3f, 1.5f));
 		model = glm::rotate(model, glm::radians(FLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(-0.5f, -0.3f, -1.5f)); // 3. Regresar
+		model = glm::translate(model, glm::vec3(-0.5f, -0.3f, -1.5f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataDI.Draw(lightingShader);
 
-		// Pata Trasera Derecha (TD)
+		// Pata Trasera Derecha
 		model = modelGato;
-		model = glm::translate(model, glm::vec3(-0.5f, 0.3f, -1.5f)); // 1. Mover a la cadera TD (AJUSTAR)
+		model = glm::translate(model, glm::vec3(-0.5f, 0.3f, -1.5f));
 		model = glm::rotate(model, glm::radians(BLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(0.5f, -0.3f, 1.5f)); // 3. Regresar
+		model = glm::translate(model, glm::vec3(0.5f, -0.3f, 1.5f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataTD.Draw(lightingShader);
 
-		// Pata Trasera Izquierda (TI)
+		// Pata Trasera Izquierda
 		model = modelGato;
-		model = glm::translate(model, glm::vec3(0.5f, 0.3f, -1.5f)); // 1. Mover a la cadera TI (AJUSTAR)
+		model = glm::translate(model, glm::vec3(0.5f, 0.3f, -1.5f));
 		model = glm::rotate(model, glm::radians(BLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(-0.5f, -0.3f, 1.5f)); // 3. Regresar
+		model = glm::translate(model, glm::vec3(-0.5f, -0.3f, 1.5f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataTI.Draw(lightingShader);
 
-		/////////////////////////////////
-		/* Termina Dibujo Modelo Gato */
-		////////////////////////////////
-
-
+		// ===Activacion del canal alfa para un modelo ===
 		//model = glm::mat4(1);
 		//glEnable(GL_BLEND);//Avtiva la funcionalidad para trabajar el canal alfa
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1067,7 +1020,6 @@ int main()
 		//Ball.Draw(lightingShader);
 		//glDisable(GL_BLEND);  //Desactiva el canal alfa 
 		//glBindVertexArray(0);
-
 
 		// Also draw the lamp object, again binding the appropriate shader
 		lampShader.Use();
@@ -1085,13 +1037,6 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		// Draw the light object (using light's vertex attributes)
 
-		//model = glm::mat4(1);
-		//model = glm::translate(model, pointLightPositions[0]);
-		//model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
-		//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		//glBindVertexArray(VAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
-
 		model = glm::mat4(1);
 		model = glm::translate(model, sunPosition);
 		model = glm::scale(model, glm::vec3(0.6f)); // Bigger so the sun is visible
@@ -1101,7 +1046,7 @@ int main()
 
 		glBindVertexArray(0);
 
-		// Draw SkyBox
+		// === Dibujo del skybox ===
 		glDepthFunc(GL_LEQUAL);
 		skyboxShader.Use();
 		view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
@@ -1139,70 +1084,14 @@ int main()
 void DoMovement()
 {
 	// Camera controls
-	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
-	{
-		camera.ProcessKeyboard(FORWARD, deltaTime);
-
-	}
-
-	if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN])
-	{
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
-
-
-	}
-
-	if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT])
-	{
-		camera.ProcessKeyboard(LEFT, deltaTime);
-
-
-	}
-
-	if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT])
-	{
-		camera.ProcessKeyboard(RIGHT, deltaTime);
-
-
-	}
+	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP]) camera.ProcessKeyboard(FORWARD, deltaTime);
+	if (keys[GLFW_KEY_S] || keys[GLFW_KEY_DOWN]) camera.ProcessKeyboard(BACKWARD, deltaTime);
+	if (keys[GLFW_KEY_A] || keys[GLFW_KEY_LEFT]) camera.ProcessKeyboard(LEFT, deltaTime);
+	if (keys[GLFW_KEY_D] || keys[GLFW_KEY_RIGHT]) camera.ProcessKeyboard(RIGHT, deltaTime);
 
 	// Sun controls
-	if (keys[GLFW_KEY_COMMA])   // ',' move sun backward
-	{
-		sunAngle -= 0.01f;
-	}
-	if (keys[GLFW_KEY_PERIOD])  // '.' move sun forward
-	{
-		sunAngle += 0.01f;
-	}
-
-	// Point light controls
-	if (keys[GLFW_KEY_T])
-	{
-		pointLightPositions[0].x += 0.01f;
-	}
-	if (keys[GLFW_KEY_G])
-	{
-		pointLightPositions[0].x -= 0.01f;
-	}
-
-	if (keys[GLFW_KEY_Y])
-	{
-		pointLightPositions[0].y += 0.01f;
-	}
-
-	if (keys[GLFW_KEY_H])
-	{
-		pointLightPositions[0].y -= 0.01f;
-	}
-	if (keys[GLFW_KEY_U])
-	{
-		pointLightPositions[0].z -= 0.1f;
-	}
-	if (keys[GLFW_KEY_J])
-	{
-		pointLightPositions[0].z += 0.01f;
-	}
+	if (keys[GLFW_KEY_COMMA]) sunAngle -= 0.01f; // sol atras
+	if (keys[GLFW_KEY_PERIOD]) sunAngle += 0.01f; // sol al frente
 
 	// Keyframe animation controls
 	if (keys[GLFW_KEY_1]) FLegsGato -= 1.0f; // Patas delanteras adelante
@@ -1269,6 +1158,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 	}
 
+	// Guardar frame
 	if (keys[GLFW_KEY_K])
 	{
 		if (FrameIndex < MAX_FRAMES)
@@ -1278,8 +1168,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 	}
 
-
-
+	// Cerrar ventana
 	if (GLFW_KEY_ESCAPE == key && GLFW_PRESS == action)
 	{
 		glfwSetWindowShouldClose(window, GL_TRUE);
@@ -1297,6 +1186,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		}
 	}
 
+	// Alternar luz puntual
 	if (keys[GLFW_KEY_SPACE])
 	{
 		active = !active;
@@ -1311,6 +1201,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		}
 	}
 
+	// Inicio de animacion de Steve caminando
 	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 	{
 		stevePosZ = 0.0f;
@@ -1320,64 +1211,78 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		g_SteveAnimator->PlayAnimation(g_SteveAnim);
 		playFBX = true;
 
-		printf("Animación de Steve reiniciada desde el origen\n");
+		printf("Animación de Steve iniciada\n");
 
 	}
 
+	// Inicio de animacion de Alex idle, alternando entre play y pause
 	if (key == GLFW_KEY_V && action == GLFW_PRESS)
 	{
 		playAlex = !playAlex;
 		if (playAlex) {
 			g_alexAnimator->PlayAnimation(g_alexAnim);
-			printf("Animacion Alex Activada\n");
+			printf("Animacion de Alex activada\n");
 		}
 		else {
 			g_alexAnimator->Reset();
-			printf("Animacion Alex Pausada\n");
+			printf("Animacion de Alex pausada\n");
 		}
 	}
 
+	// Inicio de animacion de zombie pushups, alternando entre play y pause
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
 		playZombie = !playZombie;
 		if (playZombie) {
 			g_zombieAnimator->PlayAnimation(g_zombieAnim);
-			printf("Animacion Zombie Activada\n");
+			printf("Animacion de Zombie activada\n");
 		}
 		else {
 			g_zombieAnimator->Reset();
-			printf("Animacion Zombie Pausada\n");
+			printf("Animacion de Zombie pausada\n");
 		}
 	}
 
+	// Inicio de animacion de ghast flotando, alternando entre play y pause
 	if (key == GLFW_KEY_X && action == GLFW_PRESS)
 	{
 		playGhast = !playGhast;
 		if (playGhast) {
 			g_ghastAnimator->PlayAnimation(g_ghastAnim);
-			printf("Animacion Ghast Activada\n");
+			printf("Animacion de Ghast activada\n");
 		}
 		else {
 			g_ghastAnimator->Reset();
-			printf("Animacion Ghast Pausada\n");
+			printf("Animacion de Ghast pausada\n");
 		}
 	}
+
+	// Inicio de animcion de zorro
 	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
 	{
 		if (zorroEstado == 0 || zorroEstado == 3)
+		{
 			zorroEstado = 1;   // sentarse
+			printf("Animacion de zorro sentado\n");
+		}
 		else
+		{
 			zorroEstado = 3;   // levantarse
+			printf("Animacion de zorro parado\n");
+		}
 	}
 
+	// Iniciar o detener ciclo día/noche
 	if (key == GLFW_KEY_N && action == GLFW_PRESS)
 	{
 		dayNightCycle = !dayNightCycle;
-		printf("Day/Night cycle: %s\n", dayNightCycle ? "ON" : "OFF");
+		printf("Ciclo del dia/noche: %s\n", dayNightCycle ? "ON" : "OFF");
 	}
 
 
 }
+
+// Function to handle keyframe animation logic
 void AnimationKeys() {
 
 	if (play)
@@ -1418,6 +1323,7 @@ void AnimationKeys() {
 
 }
 
+// Is called whenever the mouse moves
 void MouseCallback(GLFWwindow* window, double xPos, double yPos)
 {
 	if (firstMouse)
