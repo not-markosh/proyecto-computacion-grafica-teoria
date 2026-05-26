@@ -910,6 +910,49 @@ int main()
 		Ghast.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
+		// === Animacion de cangrejo ===
+		model = modelTemp;
+		if (playCangrejo)
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+			g_cangrejoAnimator->UpdateAnimation(deltaTime);
+
+			model = glm::translate(model, glm::vec3(-1.0f, 0.15f, 2.5f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.05f));
+
+			const auto& cangrejoTransforms = g_cangrejoAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)cangrejoTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(cangrejoTransforms[i])
+				);
+			}
+		}
+		else
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+
+			const auto& cangrejoTransforms = g_cangrejoAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)cangrejoTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(cangrejoTransforms[i])
+				);
+			}
+
+			model = glm::translate(model, glm::vec3(-1.0f, 0.15f, 2.5f));
+			model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.05f));
+		}
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Cangrejo.Draw(lightingShader);
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+
 		// === Animacion de pato caminando ===
 		model = modelTemp;
 		if (playPato)
@@ -1319,6 +1362,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		else {
 			g_zombieAnimator->Reset();
 			printf("Animacion de Zombie pausada\n");
+		}
+	}
+
+	if (key == GLFW_KEY_G && action == GLFW_PRESS)
+	{
+		playCangrejo = !playCangrejo;
+		if (playCangrejo) {
+			g_cangrejoAnimator->PlayAnimation(g_cangrejoAnim);
+			printf("Animacion de Cangrejo activada\n");
+		}
+		else {
+			g_cangrejoAnimator->Reset();
+			printf("Animacion de Cangrejo pausada\n");
 		}
 	}
 
