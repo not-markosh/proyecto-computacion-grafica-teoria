@@ -1,5 +1,4 @@
 # Proyecto Final — Escena inspirada en Minecraft
-**Computación Gráfica** · Cecilia Torres & Marco Antonio Sánchez
 
 Escena interactiva en OpenGL que recrea un ambiente estilo Minecraft con personajes animados, ciclo de día/noche, cámara libre y múltiples técnicas de animación (keyframes, máquina de estados y esqueleto FBX).
 
