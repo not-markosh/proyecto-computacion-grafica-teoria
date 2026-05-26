@@ -102,7 +102,7 @@ float vertices[] = {
 	   -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 };
 
-
+//Ciclo noche y dia
 float sunAngle = 0.0f;
 float sunSpeed = 0.2f;
 float sunRadius = 10.0f;
@@ -141,6 +141,7 @@ Animator* g_SteveAnimator = nullptr;
 float steveSpeed = 1.0f;
 int steveEstado = 0;
 float steveDir = 1.0f;
+float stevePosX = 0.0f, stevePosY = 0.0f, stevePosZ = 0.0f;
 Animation* g_alexAnim = nullptr;
 Animator* g_alexAnimator = nullptr;
 Animation* g_zombieAnim = nullptr;
@@ -149,34 +150,43 @@ Animation* g_ghastAnim = nullptr;
 Animator* g_ghastAnimator = nullptr;
 
 
-//KeyFrames
-float dogPosX, dogPosY, dogPosZ;
+//Animacion KeyFrames gato
+float gatoPosX = -0.15f, gatoPosY = 0.2f, gatoPosZ = -1.0f;
+float rotGato = 0.0f;
+float headGato = 0.0f;
+float FLegsGato = 0.0f;
+float BLegsGato = 0.0f;
+float tailGato = 0.0f;
+float inclinacionGato = 0.0f;
+float inclinacionIncGato = 0.0f;
 
 #define MAX_FRAMES 16
-int i_max_steps = 190;
+int i_max_steps = 140;
 int i_curr_steps = 0;
-typedef struct _frame {
 
-	float rotDog;
-	float rotDogInc;
-	float dogPosX;
-	float dogPosY;
-	float dogPosZ;
+typedef struct _frame {
+	float rotGato;
+	float rotGatoInc;
+	float gatoPosX;
+	float gatoPosY;
+	float gatoPosZ;
 	float incX;
 	float incY;
 	float incZ;
-	float head;
-	float headInc;
-	float FRLeg;
-	float FRLegInc;
-	float RLegs;
-	float RLegsInc;
-
-
-}FRAME;
+	float headGato;
+	float headIncGato;
+	float FLegsGato;
+	float FLegsIncGato;
+	float BLegsGato;
+	float BLegsIncGato;
+	float tailGato;
+	float tailIncGato;
+	float inclinacionGato;
+	float inclinacionIncGato;
+} FRAME;
 
 FRAME KeyFrame[MAX_FRAMES];
-int FrameIndex = 0;			//introducir datos
+int FrameIndex = 0;			// Introducir datos
 bool play = false;
 int playIndex = 0;
 
@@ -185,15 +195,17 @@ void saveFrame(void)
 
 	printf("frameindex %d\n", FrameIndex);
 
-	KeyFrame[FrameIndex].dogPosX = dogPosX;
-	KeyFrame[FrameIndex].dogPosY = dogPosY;
-	KeyFrame[FrameIndex].dogPosZ = dogPosZ;
+	KeyFrame[FrameIndex].gatoPosX = gatoPosX;
+	KeyFrame[FrameIndex].gatoPosY = gatoPosY;
+	KeyFrame[FrameIndex].gatoPosZ = gatoPosZ;
 
-	KeyFrame[FrameIndex].rotDog = rotDog;
-	KeyFrame[FrameIndex].head = head;
-	KeyFrame[FrameIndex].FRLeg = FRLeg;
-	KeyFrame[FrameIndex].RLegs = RLegs;
+	KeyFrame[FrameIndex].rotGato = rotGato;
+	KeyFrame[FrameIndex].headGato = headGato;
+	KeyFrame[FrameIndex].FLegsGato = FLegsGato;
+	KeyFrame[FrameIndex].BLegsGato = BLegsGato;
+	KeyFrame[FrameIndex].tailGato = tailGato;
 
+	KeyFrame[FrameIndex].inclinacionGato = inclinacionGato;
 
 	FrameIndex++;
 }
@@ -212,13 +224,15 @@ void saveFramesToFile(const char* filename)
 
 	for (int i = 0; i < FrameIndex; i++)
 	{
-		file << KeyFrame[i].dogPosX << " "
-			<< KeyFrame[i].dogPosY << " "
-			<< KeyFrame[i].dogPosZ << " "
-			<< KeyFrame[i].rotDog << " "
-			<< KeyFrame[i].head << " "
-			<< KeyFrame[i].FRLeg << " "
-			<< KeyFrame[i].RLegs << "\n";
+		file << KeyFrame[i].gatoPosX << " "
+			<< KeyFrame[i].gatoPosY << " "
+			<< KeyFrame[i].gatoPosZ << " "
+			<< KeyFrame[i].rotGato << " "
+			<< KeyFrame[i].headGato << " "
+			<< KeyFrame[i].FLegsGato << " "
+			<< KeyFrame[i].BLegsGato << " "
+			<< KeyFrame[i].tailGato << " "
+			<< KeyFrame[i].inclinacionGato << "\n";
 	}
 
 	file.close();
@@ -250,21 +264,25 @@ void loadFramesFromFile(const char* filename)
 		KeyFrame[i].incX = 0;
 		KeyFrame[i].incY = 0;
 		KeyFrame[i].incZ = 0;
-		KeyFrame[i].rotDogInc = 0;
-		KeyFrame[i].headInc = 0;
-		KeyFrame[i].FRLegInc = 0;
-		KeyFrame[i].RLegsInc = 0;
+		KeyFrame[i].rotGatoInc = 0;
+		KeyFrame[i].headIncGato = 0;
+		KeyFrame[i].FLegsIncGato = 0;
+		KeyFrame[i].BLegsIncGato = 0;
+		KeyFrame[i].tailIncGato = 0;
+		KeyFrame[i].inclinacionIncGato = 0;
 	}
 
 	for (int i = 0; i < frameCount; i++)
 	{
-		file >> KeyFrame[i].dogPosX
-			>> KeyFrame[i].dogPosY
-			>> KeyFrame[i].dogPosZ
-			>> KeyFrame[i].rotDog
-			>> KeyFrame[i].head
-			>> KeyFrame[i].FRLeg
-			>> KeyFrame[i].RLegs;
+		file >> KeyFrame[i].gatoPosX
+			>> KeyFrame[i].gatoPosY
+			>> KeyFrame[i].gatoPosZ
+			>> KeyFrame[i].rotGato
+			>> KeyFrame[i].headGato
+			>> KeyFrame[i].FLegsGato
+			>> KeyFrame[i].BLegsGato
+			>> KeyFrame[i].tailGato
+			>> KeyFrame[i].inclinacionGato;
 	}
 
 	FrameIndex = frameCount;
@@ -274,26 +292,30 @@ void loadFramesFromFile(const char* filename)
 
 void resetElements(void)
 {
-	dogPosX = KeyFrame[0].dogPosX;
-	dogPosY = KeyFrame[0].dogPosY;
-	dogPosZ = KeyFrame[0].dogPosZ;
-	head = KeyFrame[0].head;
-	FRLeg = KeyFrame[0].FRLeg;
-
-	rotDog = KeyFrame[0].rotDog;
+	gatoPosX = KeyFrame[0].gatoPosX;
+	gatoPosY = KeyFrame[0].gatoPosY;
+	gatoPosZ = KeyFrame[0].gatoPosZ;
+	headGato = KeyFrame[0].headGato;
+	FLegsGato = KeyFrame[0].FLegsGato;
+	BLegsGato = KeyFrame[0].BLegsGato;
+	tailGato = KeyFrame[0].tailGato;
+	rotGato = KeyFrame[0].rotGato;
+	inclinacionGato = KeyFrame[0].inclinacionGato;
 
 }
 void interpolation(void)
 {
 
-	KeyFrame[playIndex].incX = (KeyFrame[playIndex + 1].dogPosX - KeyFrame[playIndex].dogPosX) / i_max_steps;
-	KeyFrame[playIndex].incY = (KeyFrame[playIndex + 1].dogPosY - KeyFrame[playIndex].dogPosY) / i_max_steps;
-	KeyFrame[playIndex].incZ = (KeyFrame[playIndex + 1].dogPosZ - KeyFrame[playIndex].dogPosZ) / i_max_steps;
-	KeyFrame[playIndex].headInc = (KeyFrame[playIndex + 1].head - KeyFrame[playIndex].head) / i_max_steps;
-	KeyFrame[playIndex].FRLegInc = (KeyFrame[playIndex + 1].FRLeg - KeyFrame[playIndex].FRLeg) / i_max_steps;
-	KeyFrame[playIndex].RLegsInc = (KeyFrame[playIndex + 1].RLegs - KeyFrame[playIndex].RLegs) / i_max_steps;
+	KeyFrame[playIndex].incX = (KeyFrame[playIndex + 1].gatoPosX - KeyFrame[playIndex].gatoPosX) / i_max_steps;
+	KeyFrame[playIndex].incY = (KeyFrame[playIndex + 1].gatoPosY - KeyFrame[playIndex].gatoPosY) / i_max_steps;
+	KeyFrame[playIndex].incZ = (KeyFrame[playIndex + 1].gatoPosZ - KeyFrame[playIndex].gatoPosZ) / i_max_steps;
+	KeyFrame[playIndex].headIncGato = (KeyFrame[playIndex + 1].headGato - KeyFrame[playIndex].headGato) / i_max_steps;
+	KeyFrame[playIndex].FLegsIncGato = (KeyFrame[playIndex + 1].FLegsGato - KeyFrame[playIndex].FLegsGato) / i_max_steps;
+	KeyFrame[playIndex].BLegsIncGato = (KeyFrame[playIndex + 1].BLegsGato - KeyFrame[playIndex].BLegsGato) / i_max_steps;
+	KeyFrame[playIndex].tailIncGato = (KeyFrame[playIndex + 1].tailGato - KeyFrame[playIndex].tailGato) / i_max_steps;
 
-	KeyFrame[playIndex].rotDogInc = (KeyFrame[playIndex + 1].rotDog - KeyFrame[playIndex].rotDog) / i_max_steps;
+	KeyFrame[playIndex].rotGatoInc = (KeyFrame[playIndex + 1].rotGato - KeyFrame[playIndex].rotGato) / i_max_steps;
+	KeyFrame[playIndex].inclinacionIncGato = (KeyFrame[playIndex + 1].inclinacionGato - KeyFrame[playIndex].inclinacionGato) / i_max_steps;
 
 }
 
@@ -400,20 +422,25 @@ int main()
 	//KeyFrames
 	for (int i = 0; i < MAX_FRAMES; i++)
 	{
-		KeyFrame[i].dogPosX = 0;
-		KeyFrame[i].dogPosY = 0;
-		KeyFrame[i].dogPosZ = 0;
+		KeyFrame[i].gatoPosX = 0;
+		KeyFrame[i].gatoPosY = 0;
+		KeyFrame[i].gatoPosZ = 0;
 		KeyFrame[i].incX = 0;
 		KeyFrame[i].incY = 0;
 		KeyFrame[i].incZ = 0;
-		KeyFrame[i].rotDog = 0;
-		KeyFrame[i].rotDogInc = 0;
-		KeyFrame[i].head = 0;
-		KeyFrame[i].headInc = 0;
-		KeyFrame[i].FRLeg = 0;
-		KeyFrame[i].FRLegInc = 0;
-		KeyFrame[i].RLegs = 0;
-		KeyFrame[i].RLegsInc = 0;
+		KeyFrame[i].rotGato = 0;
+		KeyFrame[i].rotGatoInc = 0;
+		KeyFrame[i].headGato = 0;
+		KeyFrame[i].headIncGato = 0;
+		KeyFrame[i].FLegsGato = 0;
+		KeyFrame[i].FLegsIncGato = 0;
+		KeyFrame[i].BLegsGato = 0;
+		KeyFrame[i].BLegsIncGato = 0;
+		KeyFrame[i].tailGato = 0;
+		KeyFrame[i].tailIncGato = 0;
+		KeyFrame[i].inclinacionGato = 0;
+		KeyFrame[i].inclinacionIncGato = 0;
+
 	}
 
 	GLfloat skyboxVertices[] = {
@@ -707,11 +734,11 @@ int main()
 			if (steveEstado == 0) // Estado 0: Caminando hacia adelante
 			{
 				g_SteveAnimator->UpdateAnimation(deltaTime);
-				dogPosZ += steveDir * steveSpeed * deltaTime;
+				stevePosZ += steveDir * steveSpeed * deltaTime;
 
-				if (dogPosZ >= 2.8f)
+				if (stevePosZ >= 2.8f)
 				{
-					dogPosZ = 2.8f;   
+					stevePosZ = 2.8f;   
 					steveDir = -1.0f;
 					steveEstado = 1;    
 				}
@@ -719,18 +746,18 @@ int main()
 			else if (steveEstado == 1) // Estado 1: Regresando al origen
 			{
 				g_SteveAnimator->UpdateAnimation(deltaTime);
-				dogPosZ += steveDir * steveSpeed * deltaTime;
+				stevePosZ += steveDir * steveSpeed * deltaTime;
 
-				if (dogPosZ <= 0.0f)
+				if (stevePosZ <= 0.0f)
 				{
-					dogPosZ = 0.0f;    
+					stevePosZ = 0.0f;    
 					steveEstado = 2;     
 					playFBX = false;
 				}
 			}
 
 			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
-			model = glm::translate(model, glm::vec3(2.0f + dogPosX, 0.1f + dogPosY, 0.0f + dogPosZ));
+			model = glm::translate(model, glm::vec3(2.0f + stevePosX, 0.1f + stevePosY, 0.0f + stevePosZ));
 			if (steveEstado == 1)
 				model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 			model = glm::scale(model, glm::vec3(0.05f));
@@ -747,7 +774,7 @@ int main()
 		else
 		{
 			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
-			model = glm::translate(model, glm::vec3(2.0f + dogPosX, 0.1f + dogPosY, 0.0f + dogPosZ));
+			model = glm::translate(model, glm::vec3(2.0f + stevePosX, 0.1f + stevePosY, 0.0f + stevePosZ));
 			model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 			model = glm::scale(model, glm::vec3(0.05f));
 		}
@@ -965,46 +992,63 @@ int main()
 		/* Inicia Dibujo Modelo Gato */
 		///////////////////////////////
 
-		// Cabeza
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Base del modelo gato
+		glm::mat4 modelGato = modelTemp;
+		modelGato = glm::translate(modelGato, glm::vec3(gatoPosX, gatoPosY, gatoPosZ));
+		modelGato = glm::rotate(modelGato, glm::radians(rotGato), glm::vec3(0.0f, 1.0f, 0.0f));
+		modelGato = glm::rotate(modelGato, glm::radians(inclinacionGato), glm::vec3(1.0f, 0.0f, 0.0f));
+		modelGato = glm::scale(modelGato, glm::vec3(0.05f));
+
+		// Cuerpo (Base)
+		model = modelGato;
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoCuerpo.Draw(lightingShader);
 
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Cabeza
+		model = modelGato;
+		//model = glm::translate(model, glm::vec3(0.0f, 2.0f, 3.0f)); // 1. Mover al cuello (AJUSTAR)
+		model = glm::rotate(model, glm::radians(headGato), glm::vec3(1.0f, 0.0f, 0.0f)); // 2. Rotar
+		//model = glm::translate(model, glm::vec3(0.0f, -2.0f, -3.0f)); // 3. Regresar (Mismos números, pero negativos)
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoCara.Draw(lightingShader);
 
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Cola
+		model = modelGato;
+		//model = glm::translate(model, glm::vec3(0.0f, 1.5f, -3.0f)); // 1. Mover a la base de la cola (AJUSTAR)
+		model = glm::rotate(model, glm::radians(tailGato), glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::translate(model, glm::vec3(0.0f, -1.5f, 3.0f)); // 3. Regresar
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoCola.Draw(lightingShader);
 
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Pata Delantera Derecha (DD)
+		model = modelGato;
+		model = glm::translate(model, glm::vec3(-0.5f, 0.3f, 1.5f)); // 1. Mover al hombro DD (AJUSTAR)
+		model = glm::rotate(model, glm::radians(FLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.5f, -0.3f, -1.5f)); // 3. Regresar
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataDD.Draw(lightingShader);
 
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Pata Delantera Izquierda (DI)
+		model = modelGato;
+		model = glm::translate(model, glm::vec3(0.5f, 0.3f, 1.5f)); // 1. Mover al hombro DI (AJUSTAR)
+		model = glm::rotate(model, glm::radians(FLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.5f, -0.3f, -1.5f)); // 3. Regresar
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataDI.Draw(lightingShader);
 
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Pata Trasera Derecha (TD)
+		model = modelGato;
+		model = glm::translate(model, glm::vec3(-0.5f, 0.3f, -1.5f)); // 1. Mover a la cadera TD (AJUSTAR)
+		model = glm::rotate(model, glm::radians(BLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.5f, -0.3f, 1.5f)); // 3. Regresar
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataTD.Draw(lightingShader);
 
-		model = modelTemp;
-		model = glm::scale(model, glm::vec3(0.05f));
-		model = glm::translate(model, glm::vec3(0.0f, 3.6f, -25.0f));
+		// Pata Trasera Izquierda (TI)
+		model = modelGato;
+		model = glm::translate(model, glm::vec3(0.5f, 0.3f, -1.5f)); // 1. Mover a la cadera TI (AJUSTAR)
+		model = glm::rotate(model, glm::radians(BLegsGato), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.5f, -0.3f, 1.5f)); // 3. Regresar
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		GatoPataTI.Draw(lightingShader);
 
@@ -1094,7 +1138,6 @@ int main()
 // Moves/alters the camera positions based on user input
 void DoMovement()
 {
-
 	// Camera controls
 	if (keys[GLFW_KEY_W] || keys[GLFW_KEY_UP])
 	{
@@ -1123,6 +1166,7 @@ void DoMovement()
 
 	}
 
+	// Sun controls
 	if (keys[GLFW_KEY_COMMA])   // ',' move sun backward
 	{
 		sunAngle -= 0.01f;
@@ -1132,6 +1176,7 @@ void DoMovement()
 		sunAngle += 0.01f;
 	}
 
+	// Point light controls
 	if (keys[GLFW_KEY_T])
 	{
 		pointLightPositions[0].x += 0.01f;
@@ -1159,7 +1204,29 @@ void DoMovement()
 		pointLightPositions[0].z += 0.01f;
 	}
 
-	if (keys[GLFW_KEY_O])  // 'O' for Output (save to file)
+	// Keyframe animation controls
+	if (keys[GLFW_KEY_1]) FLegsGato -= 1.0f; // Patas delanteras adelante
+	if (keys[GLFW_KEY_2]) FLegsGato += 1.0f; // Patas delanteras atras
+	if (keys[GLFW_KEY_3]) BLegsGato -= 1.0f; // Patas traseras adelante
+	if (keys[GLFW_KEY_4]) BLegsGato += 1.0f; // Patas traseras atras
+	if (keys[GLFW_KEY_5]) tailGato -= 1.0f;  // Cola derecha
+	if (keys[GLFW_KEY_6]) tailGato += 1.0f;  // Cola izquierda
+	if (keys[GLFW_KEY_7]) headGato -= 1.0f;  // Cabeza arriba
+	if (keys[GLFW_KEY_8]) headGato += 1.0f;  // Cabeza abajo
+	if (keys[GLFW_KEY_KP_1]) gatoPosX -= 0.01f; // Izquierda
+	if (keys[GLFW_KEY_KP_2]) gatoPosX += 0.01f; // Derecha
+	if (keys[GLFW_KEY_KP_3]) gatoPosY -= 0.01f; // Abajo
+	if (keys[GLFW_KEY_KP_4]) gatoPosY += 0.01f; // Arriba
+	if (keys[GLFW_KEY_KP_5]) gatoPosZ -= 0.01f;  // Atras
+	if (keys[GLFW_KEY_KP_6]) gatoPosZ += 0.01f;  // Adelante
+	if (keys[GLFW_KEY_KP_7]) rotGato -= 0.1f; // Girar izq
+	if (keys[GLFW_KEY_KP_8]) rotGato += 0.1f; // Girar der
+	if (keys[GLFW_KEY_KP_9]) inclinacionGato += 0.1f; // Inclinar abajo
+	if (keys[GLFW_KEY_KP_0]) inclinacionGato -= 0.1f; // Inclinar arriba
+
+
+	// Keyframe save to file controls
+	if (keys[GLFW_KEY_O]) 
 	{
 		if (FrameIndex > 0)
 		{
@@ -1171,7 +1238,8 @@ void DoMovement()
 		}
 	}
 
-	if (keys[GLFW_KEY_P])  // 'P' for loP... pickup (load from file)
+	// Keyframe load from file controls
+	if (keys[GLFW_KEY_P]) 
 	{
 		loadFramesFromFile("animation.txt");
 	}
@@ -1245,7 +1313,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 	{
-		dogPosZ = 0.0f;
+		stevePosZ = 0.0f;
 		steveEstado = 0;
 		steveDir = 1.0f;
 
@@ -1333,14 +1401,15 @@ void AnimationKeys() {
 		else
 		{
 			//Draw animation
-			dogPosX += KeyFrame[playIndex].incX;
-			dogPosY += KeyFrame[playIndex].incY;
-			dogPosZ += KeyFrame[playIndex].incZ;
-			head += KeyFrame[playIndex].headInc;
-			FRLeg += KeyFrame[playIndex].FRLegInc;
-			RLegs += KeyFrame[playIndex].RLegsInc;
-
-			rotDog += KeyFrame[playIndex].rotDogInc;
+			gatoPosX += KeyFrame[playIndex].incX;
+			gatoPosY += KeyFrame[playIndex].incY;
+			gatoPosZ += KeyFrame[playIndex].incZ;
+			headGato += KeyFrame[playIndex].headIncGato;
+			FLegsGato += KeyFrame[playIndex].FLegsIncGato;
+			BLegsGato += KeyFrame[playIndex].BLegsIncGato;
+			tailGato += KeyFrame[playIndex].tailIncGato;
+			rotGato += KeyFrame[playIndex].rotGatoInc;
+			inclinacionGato += KeyFrame[playIndex].inclinacionIncGato;
 
 			i_curr_steps++;
 		}
