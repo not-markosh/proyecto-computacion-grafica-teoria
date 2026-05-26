@@ -131,18 +131,28 @@ bool playFBX = false;
 bool playAlex = false;
 bool playZombie = false;
 bool playGhast = false;
+bool playCangrejo = false;
+bool playPato = false;
 Animation* g_SteveAnim = nullptr;
 Animator* g_SteveAnimator = nullptr;
 float steveSpeed = 1.0f;
 int steveEstado = 0;
 float steveDir = 1.0f;
 float stevePosX = 0.0f, stevePosY = 0.0f, stevePosZ = 0.0f;
+float patoSpeed = 1.0f;
+int patoEstado = 0;
+float patoDir = 1.0f;
+float patoPosX = 0.0f, patoPosY = 0.0f, patoPosZ = 0.0f;
 Animation* g_alexAnim = nullptr;
 Animator* g_alexAnimator = nullptr;
 Animation* g_zombieAnim = nullptr;
 Animator* g_zombieAnimator = nullptr;
 Animation* g_ghastAnim = nullptr;
 Animator* g_ghastAnimator = nullptr;
+Animation* g_cangrejoAnim = nullptr;
+Animator* g_cangrejoAnimator = nullptr;
+Animation* g_patoAnim = nullptr;
+Animator* g_patoAnimator = nullptr;
 
 
 // === Animacion keyframes gato ===
@@ -410,6 +420,18 @@ int main()
 	g_ghastAnim = new Animation("Models/Ghast/ghast.fbx", &Ghast);
 	g_ghastAnimator = new Animator(g_ghastAnim);
 	g_ghastAnimator->Reset();
+
+	//Model Cangrejo
+	Model Cangrejo((char*)"Models/Cangrejo/crab.fbx");
+	g_cangrejoAnim = new Animation("Models/Cangrejo/crab.fbx", &Cangrejo);
+	g_cangrejoAnimator = new Animator(g_cangrejoAnim);
+	g_cangrejoAnimator->Reset();
+
+	//Model Pato
+	Model Pato((char*)"Models/Pato/duck.fbx");
+	g_patoAnim = new Animation("Models/Pato/duck.fbx", &Pato);
+	g_patoAnimator = new Animator(g_patoAnim);
+	g_patoAnimator->Reset();
 
 
 	//Inicializacion de keyframes
@@ -888,6 +910,63 @@ int main()
 		Ghast.Draw(lightingShader);
 		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
 
+		// === Animacion de pato caminando ===
+		model = modelTemp;
+		if (playPato)
+		{
+			// Maquina de estados
+			if (patoEstado == 0) // Estado 0: Caminando hacia adelante
+			{
+				g_patoAnimator->UpdateAnimation(deltaTime);
+				patoPosZ += patoDir * patoSpeed * deltaTime;
+
+				if (patoPosZ >= 0.8f)
+				{
+					patoPosZ = 0.8f;
+					patoDir = -1.0f;
+					patoEstado = 1;
+				}
+			}
+			else if (patoEstado == 1) // Estado 1: Regresando al origen
+			{
+				g_patoAnimator->UpdateAnimation(deltaTime);
+				patoPosZ += patoDir * patoSpeed * deltaTime;
+
+				if (patoPosZ <= 0.0f)
+				{
+					patoPosZ = 0.0f;
+					patoEstado = 2;
+					playPato = false;
+				}
+			}
+
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 1);
+			model = glm::translate(model, glm::vec3(2.5f + patoPosX, 0.18f + patoPosY, 2.0f + patoPosZ));
+			if (patoEstado == 1)
+				model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.1f));
+			const auto& patoTransforms = g_patoAnimator->GetFinalBoneMatrices();
+			for (int i = 0; i < (int)patoTransforms.size(); i++)
+			{
+				string uniformName = "finalBonesMatrices[" + to_string(i) + "]";
+				glUniformMatrix4fv(
+					glGetUniformLocation(lightingShader.Program, uniformName.c_str()),
+					1, GL_FALSE, glm::value_ptr(patoTransforms[i])
+				);
+			}
+		}
+		else
+		{
+			glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+			model = glm::translate(model, glm::vec3(2.5f + patoPosX, 0.18f + patoPosY, 2.0f + patoPosZ));
+			model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = glm::scale(model, glm::vec3(0.1f));
+		}
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		Pato.Draw(lightingShader);
+		glUniform1i(glGetUniformLocation(lightingShader.Program, "useBones"), 0);
+		
+
 		// == Modelo del zorro ==
 		float t = zorroSit;
 		float bodyAng = sitBody * t;
@@ -1241,6 +1320,19 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 			g_zombieAnimator->Reset();
 			printf("Animacion de Zombie pausada\n");
 		}
+	}
+
+	// Inicio de animacion de pato, alternando entre play y pause
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+	{
+		patoPosZ = 0.0f;
+		patoEstado = 0;
+		patoDir = 1.0f;
+
+		g_patoAnimator->PlayAnimation(g_patoAnim);
+		playPato = true;
+
+		printf("Animacion de Pato iniciada\n");
 	}
 
 	// Inicio de animacion de ghast flotando, alternando entre play y pause
